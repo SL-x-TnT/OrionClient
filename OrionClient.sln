@@ -23,6 +23,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Solnet.Rpc", "Solnet\src\So
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Solnet.Programs", "Solnet\src\Solnet.Programs\Solnet.Programs.csproj", "{04A885B5-C431-4501-8773-70A69A16D7EA}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ILGPU", "ILGPU\Src\ILGPU\ILGPU.csproj", "{7275C8D3-1D3D-4A6B-8BC0-559F29523FD3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +71,10 @@ Global
 		{04A885B5-C431-4501-8773-70A69A16D7EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{04A885B5-C431-4501-8773-70A69A16D7EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{04A885B5-C431-4501-8773-70A69A16D7EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7275C8D3-1D3D-4A6B-8BC0-559F29523FD3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7275C8D3-1D3D-4A6B-8BC0-559F29523FD3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7275C8D3-1D3D-4A6B-8BC0-559F29523FD3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7275C8D3-1D3D-4A6B-8BC0-559F29523FD3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

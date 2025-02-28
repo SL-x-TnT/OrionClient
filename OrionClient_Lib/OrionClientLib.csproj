@@ -11,13 +11,13 @@
 
   <ItemGroup>
     <PackageReference Include="Chaos.NaCl.Standard" Version="1.0.0" />
-    <PackageReference Include="ILGPU" Version="1.5.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="NLog" Version="5.3.4" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Equix\Equix.csproj" />
+    <ProjectReference Include="..\ILGPU\Src\ILGPU\ILGPU.csproj" />
     <ProjectReference Include="..\OrionEventLib\OrionEventLib.csproj" />
     <ProjectReference Include="..\Solnet\src\Solnet.Programs\Solnet.Programs.csproj" />
     <ProjectReference Include="..\Solnet\src\Solnet.Rpc\Solnet.Rpc.csproj" />
