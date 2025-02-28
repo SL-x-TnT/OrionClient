@@ -110,9 +110,10 @@ namespace OrionClientLib.Hashers
                 _pool.OnChallengeUpdate += _pool_OnChallengeUpdate;
             }
 
-            _context = Context.Create(builder => builder.AllAccelerators().Profiling().IOOperations()
+            _context = Context.Create(builder => builder.AllAccelerators().Profiling()//.IOOperations()
             .Inlining(InliningMode.Aggressive)
-            .Optimize(OptimizationLevel.O0));
+            .Optimize(OptimizationLevel.O0)
+            .DebugConfig(false, false, DebugSymbolsMode.Disabled, false, false));
 
             IntrinsicsLoader.Load(this.GetType(), _context);
 
