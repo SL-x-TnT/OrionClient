@@ -48,6 +48,8 @@ namespace OrionClientLib
         public VanitySettings VanitySetting { get; set; } = new VanitySettings();
         [SettingDetails("View RPC Settings", "Configure RPC settings")]
         public RPCSettings RPCSetting { get; set; } = new RPCSettings();
+        [SettingDetails("View Bitz RPC Settings", "Configure Bitz RPC settings")]
+        public BitzRPCSettings BitzRPCSetting { get; set; } = new BitzRPCSettings();
         [SettingDetails("View Staking View Settings", "Configure Staking View settings")]
         public StakingViewSettings StakingViewSetting { get; set; } = new StakingViewSettings();
         [SettingDetails("View Event Settings", "Configure Event settings that handle sending events to an external server")]
@@ -149,10 +151,34 @@ namespace OrionClientLib
             }
 
             public const string DefaultRPC = "https://api.mainnet-beta.solana.com/";
+            public const string DefaultEclipseRPC = "https://bitz-000.eclipserpc.xyz/";
 
             [SettingDetails("RPC URL", $"RPC URL to use for requests. Default: {DefaultRPC}")]
             [UrlSettingValidation]
             public string Url { get; set; } = DefaultRPC;
+        }
+
+        public class BitzRPCSettings
+        {
+            [SettingDetails("Enable", "Enable/Disable sending event data to external server (Requires restart)")]
+            public bool Enable { get; set; }
+
+            [SettingDetails("Host", "URL to send event data")]
+            [UrlSettingValidation]
+            public string WebsocketUrl { get; set; } = "localhost";
+
+            [SettingDetails("Port", "Port number")]
+            public int Port { get; set; } = 54321;
+
+            [SettingDetails("Id", "Arbitrary id that's sent in all events")]
+            public string Id { get; set; } = String.Empty;
+
+            [SettingDetails("Reconnect Time", "How often, in milliseconds, to try connecting to server")]
+            public int ReconnectTimeMs { get; set; } = 5000;
+
+            [SettingDetails("Serialization Type", "Type of serialization to use for event messages . (0 = Binary, 1 = Json)")]
+            [OptionSettingValidation<SerializationType>(SerializationType.Binary, SerializationType.Json)]
+            public SerializationType Serialization { get; set; } = SerializationType.Binary;
         }
 
         public class StakingViewSettings
