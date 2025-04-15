@@ -692,7 +692,7 @@ namespace OrionClientLib.Pools
             }
         }
 
-        protected virtual async Task<(bool success, string errorMessage)> RefreshStakeBalancesAsync(bool displayUI, CancellationToken token)
+        protected virtual async Task<(bool success, string errorMessage)> RefreshStakeBalancesAsync(bool displayUI, CancellationToken token, bool updateBalance = true)
         {
             try
             {
@@ -700,12 +700,12 @@ namespace OrionClientLib.Pools
                 {
                     await AnsiConsole.Status().StartAsync($"Grabbing balance information", async ctx =>
                     {
-                        await Update(token);
+                        await Update(updateBalance, token);
                     });
                 }
                 else
                 {
-                    await Update(token);
+                    await Update(updateBalance, token);
                 }
 
                 return (true, String.Empty);
@@ -720,15 +720,18 @@ namespace OrionClientLib.Pools
             }
         }
 
-        protected virtual async Task Update(CancellationToken token)
+        protected virtual async Task Update(bool updateBalance, CancellationToken token)
         {
-            var balanceInfo = await GetBalanceAsync(token);
-
-            if (balanceInfo.success)
+            if (updateBalance)
             {
-                foreach(var bInfo in balanceInfo.balances)
+                var balanceInfo = await GetBalanceAsync(token);
+
+                if (balanceInfo.success)
                 {
-                    _minerInformation.UpdateWalletBalance(bInfo.coin, bInfo.balance);
+                    foreach (var bInfo in balanceInfo.balances)
+                    {
+                        _minerInformation.UpdateWalletBalance(bInfo.coin, bInfo.balance);
+                    }
                 }
             }
 
@@ -964,7 +967,7 @@ namespace OrionClientLib.Pools
             using CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
             //This data takes ~20s to update properly, so everything is off by 1 update
-            await RefreshStakeBalancesAsync(false, cts.Token);
+            await RefreshStakeBalancesAsync(false, cts.Token, false);
 
             OnMinerUpdate?.Invoke(this, ([
                 DateTime.Now.ToShortTimeString(), 

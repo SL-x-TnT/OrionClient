@@ -235,7 +235,7 @@ namespace OrionClientLib.Pools
             CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
 
             //This data takes ~20s to update properly, so everything is off by 1 update
-            await RefreshStakeBalancesAsync(false, cts.Token);
+            await RefreshStakeBalancesAsync(false, cts.Token, false);
 
             OnMinerUpdate?.Invoke(this, ([
                 DateTime.Now.ToShortTimeString(),
