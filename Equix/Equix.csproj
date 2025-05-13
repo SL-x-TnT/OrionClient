@@ -26,6 +26,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="C_Avx512_lib.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="libequix.dll.old">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

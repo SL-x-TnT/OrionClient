@@ -12,8 +12,8 @@ namespace OrionClientLib.Hashers.CPU
 {
     public unsafe class ManagedCPUHarakaHasher : BaseCPUHasher
     {
-        public override string Name => "Reference [[C#]]";
-        public override string Description => "Reference implementation of DrillX w/ Haraka algorithm";
+        public override string Name => "AES-NI [[C#]]";
+        public override string Description => "AES-NI implementation of DrillX w/ Haraka algorithm";
         public override bool DisplaySetting => true;
 
         protected override void ExecuteThread(ExecutionData data)
@@ -46,7 +46,7 @@ namespace OrionClientLib.Hashers.CPU
                     {
                         ulong currentNonce = (ulong)i + _info.StartNonce;
 
-                        if (i % 32 == 0)
+                        if (i % 128 == 0)
                         {
                             hashesChecked = (ulong)(i - data.Range.Item1) - hashesChecked;
 

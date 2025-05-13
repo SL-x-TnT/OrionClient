@@ -135,6 +135,8 @@ namespace OrionClient
 
             _hashers = new List<IHasher>();
             AddSupportedHasher(new ManagedCPUHarakaHasher());
+            AddSupportedHasher(new ManagedCPUHarakaHasherAVX2());
+            AddSupportedHasher(new ManagedCPUHarakaHasherVAES());
             //AddSupportedHasher(new ManagedCPUHasher());
             ////AddSupportedHasher(new HybridCPUHasher());
             //AddSupportedHasher(new PartialCPUHasherAVX2());

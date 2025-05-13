@@ -20,6 +20,10 @@ namespace DrillX.Solver
         [DllImport("libequix", EntryPoint = "equix_solver_full_avx2", CallingConvention = CallingConvention.StdCall)]
         static unsafe extern int C_Solve_Full_Avx2(void* func, byte* heap, EquixSolution* output, ulong* keyReg);
 
+
+        [DllImport("C_Avx512_lib.dll", EntryPoint = "FullHash_AVX512", CallingConvention = CallingConvention.StdCall)]
+        static unsafe extern void Haraka_VAES_AVX512(ulong* key, ulong* output);
+
         //[DllImport("libequix", EntryPoint = "equix_solver_full_avx512", CallingConvention = CallingConvention.StdCall)]
         //static unsafe extern int C_Solve_Full_Avx512(void* func, byte* heap, EquixSolution* output, ulong* keyReg);
 
@@ -672,6 +676,22 @@ namespace DrillX.Solver
             return sols;
         }
 
+        public unsafe int Solve_Opt_Haraka_VAES(Haraka.HarakaSiphash* key, ulong* values, byte* heap, EquixSolution* solutions, ulong* rk)
+        {
+            Radix* rs = (Radix*)heap;
+
+            ulong* stageA = values;
+            ulong* stageB = rs->Stage1;
+
+            Haraka_VAES_AVX512((ulong*)key, values);
+
+            int stage1Count = SortPass1(stageA, rs->Counts, rs->TempCounts, stageB, rs->Stage1Indices, Radix.Total);
+            int stage2Count = SortPass2(stageB, rs->Counts, rs->TempCounts, stageA, stage1Count);
+            int sols = SortPass3(stageA, rs->Counts, rs->TempCounts, stageB, rs->Stage1Indices, solutions, stage2Count);
+
+            return sols;
+        }
+
         public unsafe int Solve_Opt_Com_Haraka(Haraka.HarakaSiphash key, ulong* values, byte* heap, EquixSolution* solutions, ulong* rk)
         {
             Radix* rs = (Radix*)heap;
@@ -860,20 +880,12 @@ namespace DrillX.Solver
 
             for (int i = 0; i < Radix.Total; i += 4)
             {
-                var a = Haraka.HashInput((ulong)(i + 0), rk, key);
-                var b = Haraka.HashInput((ulong)(i + 1), rk, key);
-                var c = Haraka.HashInput((ulong)(i + 2), rk, key);
-                var d = Haraka.HashInput((ulong)(i + 3), rk, key);
+                Haraka.HashInput_AVX2((ulong)(i), rk, values + i, key);
 
-                values[i] = a;
-                values[i + 1] = b;
-                values[i + 2] = c;
-                values[i + 3] = d;
-
-                ushort bucket0 = (ushort)(a & 0x7FFF);
-                ushort bucket1 = (ushort)(b & 0x7FFF);
-                ushort bucket2 = (ushort)(c & 0x7FFF);
-                ushort bucket3 = (ushort)(d & 0x7FFF);
+                ushort bucket0 = (ushort)(values[i + 0] & 0x7FFF);
+                ushort bucket1 = (ushort)(values[i + 1] & 0x7FFF);
+                ushort bucket2 = (ushort)(values[i + 2] & 0x7FFF);
+                ushort bucket3 = (ushort)(values[i + 3] & 0x7FFF);
 
                 ushort loc0 = Math.Min((byte)7, counts[bucket0]);
                 tempCounts[bucket0 * 8 + loc0] = (ushort)(i + 0);
