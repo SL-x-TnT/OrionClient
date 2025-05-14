@@ -48,7 +48,7 @@ namespace OrionClientLib.Hashers.CPU
                     {
                         ulong currentNonce = (ulong)i + _info.StartNonce;
 
-                        if (i % 128 == 0)
+                        if (i % 32 == 0)
                         {
                             hashesChecked = (ulong)(i - data.Range.Item1) - hashesChecked;
 

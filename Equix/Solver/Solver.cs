@@ -1,5 +1,6 @@
 ﻿using DrillX.Compiler;
 using Equix;
+using OrionClientLib.Hashers.Models;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -638,6 +639,79 @@ namespace DrillX.Solver
             }
         }
 
+        public EquixResult VerifyHaraka(Span<byte> challenge, EquixSolution solutions)
+        {
+            Span<Haraka.HarakaSiphash> output = stackalloc Haraka.HarakaSiphash[1];
+
+            Haraka.BuildKey(challenge, output);
+
+            ulong* roundKeys = (ulong*)Unsafe.AsPointer(ref HarakaConstants.RoundKeys2.AsSpan().GetPinnableReference());
+
+            ulong* regs = stackalloc ulong[8];
+
+            ulong pair0 = SumPair(solutions.V0, solutions.V1, output[0]);
+
+            if ((pair0 & EquixStage1Mask) != 0)
+            {
+                return EquixResult.EquixPartialSum;
+            }
+
+            ulong pair1 = SumPair(solutions.V2, solutions.V3, output[0]);
+
+            if ((pair1 & EquixStage1Mask) != 0)
+            {
+                return EquixResult.EquixPartialSum;
+            }
+
+            ulong pair2 = SumPair(solutions.V4, solutions.V5, output[0]);
+
+            if ((pair2 & EquixStage1Mask) != 0)
+            {
+                return EquixResult.EquixPartialSum;
+            }
+
+            ulong pair3 = SumPair(solutions.V6, solutions.V7, output[0]);
+
+            if ((pair3 & EquixStage1Mask) != 0)
+            {
+                return EquixResult.EquixPartialSum;
+            }
+
+
+            ulong pair4 = pair0 + pair1;
+
+            if ((pair4 & EquixStage2Mask) != 0)
+            {
+                return EquixResult.EquixPartialSum;
+            }
+
+            ulong pair5 = pair2 + pair3;
+
+            if ((pair5 & EquixStage2Mask) != 0)
+            {
+                return EquixResult.EquixPartialSum;
+            }
+
+            ulong pair6 = pair4 + pair5;
+
+            if ((pair6 & EquixFullMask) != 0)
+            {
+                return EquixResult.EquixFinalSum;
+            }
+
+
+            return EquixResult.EquixOk;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            ulong SumPair(ushort a, ushort b, Haraka.HarakaSiphash output)
+            {
+                var p1 = Haraka.HashInput((ulong)a, roundKeys, output);
+                var p2 = Haraka.HashInput((ulong)b, roundKeys, output);
+
+                return p1 + p2;
+
+            }
+        }
 
         #region Optimized
 

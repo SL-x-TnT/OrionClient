@@ -91,7 +91,7 @@ namespace OrionClientLib.Modules.Models
                     }
                 }
 
-                chosenHasher = Hashers.FirstOrDefault(x => x is CudaOptEmulationGPUHasher);
+                chosenHasher = Hashers.FirstOrDefault(x => x is CudaHarakaGPUHasher);
             }
             else if (forceAMD || allDevices.Any(x => x is CLDevice))
             {

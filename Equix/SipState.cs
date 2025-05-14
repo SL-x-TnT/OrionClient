@@ -86,6 +86,8 @@ namespace DrillX
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ulong Rol(this ulong ul, int N) => (ul << N) ^ (ul >> (64 - N));
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint Rol(this uint ul, int N) => (ul << N) ^ (ul >> (32 - N));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Rol_2(ref this ulong ul, int N) => ul = (ul << N) | (ul >> (64 - N));

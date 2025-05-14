@@ -25,6 +25,8 @@ namespace OrionClientLib.Hashers
 {
     public abstract class BaseGPUHasher : IHasher, IGPUHasher, ISettingInfo
     {
+        public enum HashingAlgorithm { Hashx, Haraka }
+
         protected static readonly Logger _logger = LogManager.GetLogger("Main");
 
         private const int _maxNonces = 4096;
@@ -39,6 +41,7 @@ namespace OrionClientLib.Hashers
         public virtual bool DisplaySetting => true;
         public virtual bool Experimental => false;
         public int BatchSize => _totalNonces;
+        public virtual HashingAlgorithm Algorithm { get; } = HashingAlgorithm.Hashx;
 
         protected Stopwatch _sw = Stopwatch.StartNew();
         protected TimeSpan _challengeStartTime;
@@ -152,10 +155,10 @@ namespace OrionClientLib.Hashers
             {
                 var device = devicesToUse[i];
 
-                GPUDeviceHasher dHasher = new GPUDeviceHasher(HashxKernel(), EquihashKernel(), device.CreateAccelerator(_context),
+                GPUDeviceHasher dHasher = new GPUDeviceHasher(HashxKernel(), HarakaKernel(), EquihashKernel(), device.CreateAccelerator(_context),
                                                               device, i, _setupCPUData, _availableCPUData,
                                                               GetHashXKernelConfig(device, maxNonces, settings), GetEquihashKernelConfig(device, maxNonces, settings),
-                                                              CudaCacheOption());
+                                                              CudaCacheOption(), Algorithm);
                 try
                 {
 
@@ -249,14 +252,12 @@ namespace OrionClientLib.Hashers
 
                     Parallel.ForEach(rangePartitioner, new ParallelOptions { MaxDegreeOfParallelism = _threads }, (range, loopState) =>
                     {
-                        Span<Instruction> allInstructions = cpuData.InstructionData.AsSpan();
                         Span<SipState> keys = cpuData.Keys.AsSpan();
 
-                        byte[] currentChallenge = new byte[40];
-                        _info.Challenge.CopyTo(currentChallenge, 0);
+                        byte[] currentChallenge = new byte[64];
                         var currentChallengeSpan = currentChallenge.AsSpan();
+                        _info.Challenge.CopyTo(currentChallengeSpan.Slice(8));
 
-                        // Loop over each range element without a delegate invocation.
                         for (int z = range.Item1; z < range.Item2; z++)
                         {
                             if (z % 32 == 0)
@@ -267,90 +268,11 @@ namespace OrionClientLib.Hashers
                                 }
                             }
 
-                            ulong currentNonce = 0;
-                            HashX program = null;
-                            var instructions = allInstructions.Slice(Instruction.TotalInstructions * z, Instruction.TotalInstructions);
+                            ulong currentNonce = Interlocked.Increment(ref _currentNonce) - 1;
+                            BinaryPrimitives.WriteUInt64LittleEndian(currentChallengeSpan, currentNonce);
 
-                            //Keep trying until a valid program is found
-                            while (true)
-                            {
-                                currentNonce = Interlocked.Increment(ref _currentNonce) - 1;
-                                BinaryPrimitives.WriteUInt64LittleEndian(currentChallengeSpan.Slice(32), currentNonce);
-
-                                //Invalid program
-                                if (!HashX.TryBuild(currentChallenge, instructions, out program))
-                                {
-                                    continue;
-                                }
-
-                                break;
-                            }
-
-                            bool valid = true;
-
-                            for (int i = 0; i < instructions.Length; i++)
-                            {
-                                var instruction = instructions[i];
-
-                                instruction.SetDestination((ulong)instruction.Dst);
-                                if (instruction.Type == OpCode.XorConst)
-                                {
-                                    //instruction.SetType(OpCode.Xor);
-                                    //instruction.Src = (int)instruction.Operand;
-
-                                    //if (instruction.Src < 8 && instruction.Src >= 0)
-                                    //{
-                                    //    valid = false;
-                                    //    break;
-                                    //}
-                                }
-                                else if (instruction.Type == OpCode.AddConst)
-                                {
-                                    //instruction.SetType(OpCode.Sub);
-                                    //instruction.Src = ((int)instruction.Operand * -1);
-
-                                    //if (instruction.Src < 8 && instruction.Src >= 0)
-                                    //{
-                                    //    valid = false;
-                                    //    break;
-                                    //}
-                                }
-                                else if (instruction.Type == OpCode.Branch)
-                                {
-                                    instruction.Dst = instruction.Operand;
-                                }
-                                else if (instruction.Type == OpCode.Rotate)
-                                {
-                                    instruction.Src = instruction.Dst;
-                                }
-
-                                if (instruction.Type == OpCode.Sub)
-                                {
-                                    instruction.SetType(OpCode.AddShift);
-                                    instruction.SetOperand(-1);
-                                }
-                                else if (instruction.Type == OpCode.AddShift)
-                                {
-                                    var nOperand = 1 << instruction.Operand;
-
-                                    instruction.SetOperand(nOperand);
-                                }
-
-                                instructions[i] = instruction;
-                            }
-
-                            if (valid)
-                            {
-                                keys[z] = new SipState
-                                {
-                                    V0 = program.RegisterKey.V0,
-                                    V1 = program.RegisterKey.V1,
-                                    V2 = program.RegisterKey.V2,
-                                    V3 = program.RegisterKey.V3,
-                                };
-
-                                cpuData.NoncesUsed[z] = currentNonce;
-                            }
+                            Haraka.BuildKey(currentChallengeSpan, MemoryMarshal.Cast<SipState, Haraka.HarakaSiphash>(keys.Slice(z)));
+                            cpuData.NoncesUsed[z] = currentNonce;
                         }
                     });
 
@@ -435,7 +357,8 @@ namespace OrionClientLib.Hashers
 
         #region GPU Implemention
 
-        public abstract Action<ArrayView<Instruction>, ArrayView<SipState>, ArrayView<ulong>> HashxKernel();
+        public virtual Action<ArrayView<Instruction>, ArrayView<SipState>, ArrayView<ulong>> HashxKernel() => default;
+        public virtual Action<ArrayView<uint>, ArrayView<SipState>, ArrayView<ulong>, ArrayView<ulong>> HarakaKernel() => default;
         public abstract KernelConfig GetHashXKernelConfig(Device device, int maxNonces, Settings settings);
         public abstract Action<ArrayView<ulong>, ArrayView<EquixSolution>, ArrayView<ushort>, ArrayView<uint>> EquihashKernel();
         public abstract KernelConfig GetEquihashKernelConfig(Device device, int maxNonces, Settings settings);
@@ -590,9 +513,11 @@ namespace OrionClientLib.Hashers
             private BlockingCollection<CPUData> _availableCPUData;
 
             private Action<ArrayView<Instruction>, ArrayView<SipState>, ArrayView<ulong>> _hashxMethod;
+            private Action<ArrayView<uint>, ArrayView<SipState>, ArrayView<ulong>, ArrayView<ulong>> _harakaMethod;
             private Action<ArrayView<ulong>, ArrayView<EquixSolution>, ArrayView<ushort>, ArrayView<uint>> _equihashMethod;
 
             private Action<KernelConfig, ArrayView<Instruction>, ArrayView<SipState>, ArrayView<ulong>> _hashxKernel;
+            private Action<KernelConfig, ArrayView<uint>, ArrayView<SipState>, ArrayView<ulong>, ArrayView<ulong>> _harakaKernel;
             private Action<KernelConfig, ArrayView<ulong>, ArrayView<EquixSolution>, ArrayView<ushort>, ArrayView<uint>> _equihashKernel;
 
             private int _nonceCount = 0;
@@ -609,17 +534,21 @@ namespace OrionClientLib.Hashers
             private bool _miningPaused => !_pauseMining.WaitOne(0);
 
             private bool _hasNotice => _miningPaused || !_running;
+            private HashingAlgorithm _algorithm;
 
             public GPUDeviceHasher(Action<ArrayView<Instruction>, ArrayView<SipState>, ArrayView<ulong>> hashxKernel,
+                         Action<ArrayView<uint>, ArrayView<SipState>, ArrayView<ulong>, ArrayView<ulong>> harakaKernel,
                          Action<ArrayView<ulong>, ArrayView<EquixSolution>, ArrayView<ushort>, ArrayView<uint>> equihashKernel,
                          Accelerator accelerator, Device device, int deviceId,
                          BlockingCollection<CPUData> readyCPUData,
                          BlockingCollection<CPUData> availableCPUData,
                          KernelConfig hashxConfig,
                          KernelConfig equihashConfig,
-                         (CudaCacheConfiguration hashxCacheConfiguration, CudaCacheConfiguration equihashCacheConfiguration) cacheOptions)
+                         (CudaCacheConfiguration hashxCacheConfiguration, CudaCacheConfiguration equihashCacheConfiguration) cacheOptions,
+                         HashingAlgorithm algorithm)
             {
                 _hashxMethod = hashxKernel;
+                _harakaMethod = harakaKernel;
                 _equihashMethod = equihashKernel;
                 _readyCPUData = readyCPUData;
                 _availableCPUData = availableCPUData;
@@ -630,6 +559,7 @@ namespace OrionClientLib.Hashers
                 _equihashConfig = equihashConfig;
                 _hashxCacheConfiguration = cacheOptions.hashxCacheConfiguration;
                 _equihashCacheConfiguration = cacheOptions.equihashCacheConfiguration;
+                _algorithm = algorithm;
             }
 
             public async void Initialize(int totalNonces)
@@ -638,15 +568,43 @@ namespace OrionClientLib.Hashers
 
                 MemoryBuffer1D<ushort, Stride1D.Dense> heap = _accelerator.Allocate1D<ushort>((uint)HeapSize * _nonceCount / 2);
 
+                #region Haraka Specific
+
+                MemoryBuffer1D<uint, Stride1D.Dense> lookupTable = _algorithm == HashingAlgorithm.Haraka ? _accelerator.Allocate1D<uint>(HarakaConstants.T0.Length * 32) : null;
+                MemoryBuffer1D<ulong, Stride1D.Dense> roundKeys = _algorithm == HashingAlgorithm.Haraka ? _accelerator.Allocate1D<ulong>(HarakaConstants.RoundKeys2.Length) : null;
+
+                uint[] allTables = new uint[lookupTable.Length];
+
+                for (int i = 0; i < 256; i++)
+                {
+                    var v = HarakaConstants.T0[i];
+
+                    for (int z = 0; z < 32; z++)
+                    {
+                        allTables[i * 32 + z] = v;
+                    }
+                }
+
+                lookupTable.CopyFromCPU(allTables);
+                roundKeys.CopyFromCPU(HarakaConstants.RoundKeys2);
+
+                #endregion
+
                 for (int i = 0; i < _maxQueueSize; i++)
                 {
-                    MemoryBuffer1D<Instruction, Stride1D.Dense> instructions = _accelerator.Allocate1D<Instruction>(_nonceCount * Instruction.TotalInstructions);
+                    MemoryBuffer1D<Instruction, Stride1D.Dense> instructions = null;
+
+                    if (_algorithm == HashingAlgorithm.Hashx)
+                    {
+                        instructions = _accelerator.Allocate1D<Instruction>(_nonceCount * Instruction.TotalInstructions);
+                    }
+
                     MemoryBuffer1D<SipState, Stride1D.Dense> keys = _accelerator.Allocate1D<SipState>(_nonceCount);
                     MemoryBuffer1D<ulong, Stride1D.Dense> hashes = _accelerator.Allocate1D<ulong>((ushort.MaxValue + 1) * _nonceCount);
                     MemoryBuffer1D<EquixSolution, Stride1D.Dense> solutions = _accelerator.Allocate1D<EquixSolution>(_nonceCount * EquixSolution.MaxLength);
                     MemoryBuffer1D<uint, Stride1D.Dense> solutionCounts = _accelerator.Allocate1D<uint>(_nonceCount);
 
-                    GPUDeviceData deviceData = new GPUDeviceData(instructions, keys, heap, hashes, solutions, solutionCounts, _nonceCount);
+                    GPUDeviceData deviceData = new GPUDeviceData(instructions, keys, heap, hashes, solutions, solutionCounts, lookupTable, roundKeys, _nonceCount);
                     _deviceData.Add(deviceData);
                     _copyToData.TryAdd(deviceData);
                 }
@@ -661,20 +619,37 @@ namespace OrionClientLib.Hashers
                 _runningTask = new Task(Execute, _runToken.Token, TaskCreationOptions.LongRunning);
                 _runningTask.Start();
 
-                _hashxKernel = _accelerator.LoadStreamKernel(_hashxMethod);
-                _equihashKernel = _accelerator.LoadStreamKernel(_equihashMethod);
-
-                if (_hashxKernel.TryGetKernel(out var kernel))
+                if (_algorithm == HashingAlgorithm.Hashx)
                 {
-                    if (kernel is CudaKernel cudaKernel)
+                    _hashxKernel = _accelerator.LoadStreamKernel(_hashxMethod);
+
+                    if (_hashxKernel.TryGetKernel(out var kernel))
                     {
-                        CudaAPI.CurrentAPI.SetFuncCacheConfig(cudaKernel.FunctionPtr, _hashxCacheConfiguration);
+                        if (kernel is CudaKernel cudaKernel)
+                        {
+                            CudaAPI.CurrentAPI.SetFuncCacheConfig(cudaKernel.FunctionPtr, _hashxCacheConfiguration);
+                        }
+                    }
+                }
+                else
+                {
+                    _harakaKernel = _accelerator.LoadStreamKernel(_harakaMethod);
+
+
+                    if (_harakaKernel.TryGetKernel(out var kernel))
+                    {
+                        if (kernel is CudaKernel cudaKernel)
+                        {
+                            CudaAPI.CurrentAPI.SetFuncCacheConfig(cudaKernel.FunctionPtr, _hashxCacheConfiguration);
+                        }
                     }
                 }
 
-                if (_equihashKernel.TryGetKernel(out kernel))
+                _equihashKernel = _accelerator.LoadStreamKernel(_equihashMethod);
+
+                if (_equihashKernel.TryGetKernel(out var kernel2))
                 {
-                    if (kernel is CudaKernel cudaKernel)
+                    if (kernel2 is CudaKernel cudaKernel)
                     {
                         CudaAPI.CurrentAPI.SetFuncCacheConfig(cudaKernel.FunctionPtr, _equihashCacheConfiguration);
                     }
@@ -757,7 +732,11 @@ namespace OrionClientLib.Hashers
                         deviceData.ProgramGenerationTime = cpuData.ProgramGenerationTime;
 
                         //Copies to device.
-                        deviceData.ProgramInstructions.View.CopyFromCPU(stream, cpuData.InstructionData);
+                        if (_algorithm == HashingAlgorithm.Hashx)
+                        {
+                            deviceData.ProgramInstructions.View.CopyFromCPU(stream, cpuData.InstructionData);
+                        }
+
                         deviceData.Keys.View.CopyFromCPU(stream, cpuData.Keys);
 
                         //Wait for copy to finish
@@ -806,7 +785,14 @@ namespace OrionClientLib.Hashers
                         }
 
                         using var marker1 = _accelerator.AddProfilingMarker();
-                        _hashxKernel(_hashxConfig, deviceData.ProgramInstructions.View, deviceData.Keys.View, deviceData.Hashes.View);
+                        if (_algorithm == HashingAlgorithm.Hashx)
+                        {
+                            _hashxKernel(_hashxConfig, deviceData.ProgramInstructions.View, deviceData.Keys.View, deviceData.Hashes.View);
+                        }
+                        else
+                        {
+                            _harakaKernel(_hashxConfig, deviceData.LookupTable.View, deviceData.Keys.View, deviceData.Hashes.View, deviceData.RoundKeys.View);
+                        }
 
                         using var marker2 = _accelerator.AddProfilingMarker();
                         _equihashKernel(_equihashConfig, deviceData.Hashes.View, deviceData.Solutions.View, deviceData.Heap.View, deviceData.SolutionCounts.View);
@@ -875,8 +861,17 @@ namespace OrionClientLib.Hashers
 
                         Span<EquixSolution> allSolutions = solutions_.GetArray().AsSpan();// deviceData.CurrentCPUData.Solutions;
                         Span<uint> solutionCounts = solutionCounts_.GetArray().AsSpan();// deviceData.CurrentCPUData.SolutionCounts;
-                        byte[] challenge = new byte[40];
-                        _hasherInfo.Challenge.CopyTo(challenge, 0);
+                        byte[] challenge = new byte[64];
+
+                        if (_algorithm == HashingAlgorithm.Hashx)
+                        {
+                            _hasherInfo.Challenge.CopyTo(challenge, 0);
+                        }
+                        else
+                        {
+                            _hasherInfo.Challenge.CopyTo(challenge, 8);
+                        }
+                        
                         byte[] b_nonceOutput = new byte[24];
 
                         Span<byte> hashOutput = new Span<byte>(new byte[32]);
@@ -934,17 +929,31 @@ namespace OrionClientLib.Hashers
                                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                                 bool VerifyResultAndReorder(ulong nonce, Span<EquixSolution> solution)
                                 {
-                                    BinaryPrimitives.WriteUInt64LittleEndian(challenge.AsSpan().Slice(32), nonce);
-                                    HashX.TryBuild(challenge, out var program);
-                                    program.InitCompiler(_solver.CompiledProgram);
-
-                                    var result = _solver.Verify(program, solution[0]);
-
-                                    program.DestroyCompiler();
-
-                                    if (result != Solver.EquixResult.EquixOk)
+                                    if (_algorithm == HashingAlgorithm.Hashx)
                                     {
-                                        return false;
+                                        BinaryPrimitives.WriteUInt64LittleEndian(challenge.AsSpan().Slice(32), nonce);
+                                        HashX.TryBuild(challenge, out var program);
+                                        program.InitCompiler(_solver.CompiledProgram);
+
+                                        var result = _solver.Verify(program, solution[0]);
+
+                                        program.DestroyCompiler();
+
+                                        if (result != Solver.EquixResult.EquixOk)
+                                        {
+                                            return false;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        BinaryPrimitives.WriteUInt64LittleEndian(challenge.AsSpan().Slice(0), nonce);
+                                        var result = _solver.VerifyHaraka(challenge, solution[0]);
+
+
+                                        if (result != Solver.EquixResult.EquixOk)
+                                        {
+                                            return false;
+                                        }
                                     }
 
                                     //Reorder
@@ -1126,6 +1135,8 @@ namespace OrionClientLib.Hashers
                 public MemoryBuffer1D<SipState, Stride1D.Dense> Keys { get; private set; }
                 public MemoryBuffer1D<ulong, Stride1D.Dense> Hashes { get; private set; }
                 public MemoryBuffer1D<EquixSolution, Stride1D.Dense> Solutions { get; private set; }
+                public MemoryBuffer1D<uint, Stride1D.Dense> LookupTable { get; private set; }
+                public MemoryBuffer1D<ulong, Stride1D.Dense> RoundKeys { get; private set; }
                 public MemoryBuffer1D<uint, Stride1D.Dense> SolutionCounts { get; private set; }
 
                 //These only need a single copy
@@ -1139,7 +1150,10 @@ namespace OrionClientLib.Hashers
                                      MemoryBuffer1D<ushort, Stride1D.Dense> heap,
                                      MemoryBuffer1D<ulong, Stride1D.Dense> hashes,
                                      MemoryBuffer1D<EquixSolution, Stride1D.Dense> solutions,
-                                     MemoryBuffer1D<uint, Stride1D.Dense> solutionsCounts, int nonceCount)
+                                     MemoryBuffer1D<uint, Stride1D.Dense> solutionsCounts,
+                                     MemoryBuffer1D<uint, Stride1D.Dense> lookupTable,
+                                     MemoryBuffer1D<ulong, Stride1D.Dense> roundKeys, 
+                                     int nonceCount)
                 {
                     ProgramInstructions = programInstructions;
                     Keys = keys;
@@ -1147,6 +1161,8 @@ namespace OrionClientLib.Hashers
                     Hashes = hashes;
                     Solutions = solutions;
                     SolutionCounts = solutionsCounts;
+                    LookupTable = lookupTable;
+                    RoundKeys = roundKeys;
                     CurrentNonces = new ulong[nonceCount];
                 }
 
@@ -1162,6 +1178,16 @@ namespace OrionClientLib.Hashers
                     if (Heap?.IsDisposed != true)
                     {
                         Heap?.Dispose();
+                    }
+
+                    if(LookupTable?.IsDisposed != true)
+                    {
+                        LookupTable?.Dispose();
+                    }
+
+                    if (RoundKeys?.IsDisposed != true)
+                    {
+                        RoundKeys?.Dispose();
                     }
                 }
             }

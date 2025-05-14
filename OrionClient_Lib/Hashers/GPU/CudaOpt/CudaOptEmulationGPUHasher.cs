@@ -11,7 +11,7 @@ namespace OrionClientLib.Hashers.GPU.Baseline
     {
         public override string Name => "Cuda (Emulation)";
         public override string Description => "Cuda optimized hasher using an emulation kernel for hashx";
-        public override bool DisplaySetting => true;
+        public override bool DisplaySetting => false;
 
         public override Action<ArrayView<Instruction>, ArrayView<SipState>, ArrayView<ulong>> HashxKernel()
         {
