@@ -105,7 +105,7 @@ namespace OrionClientLib.Hashers.GPU.Baseline
             var v7P = IntrinsicMath.Decompose(s.V3);
 
 
-            for(int i =0; i < 4; i++)
+            //for(int i =0; i < 4; i++)
             {
                 int roundStart = 0;
 
@@ -329,7 +329,6 @@ namespace OrionClientLib.Hashers.GPU.Baseline
 
                 {
                     uint temp0_0 = LoadValue(lookupTable, ExtractByte3(v1P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v1P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v0P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v0P.Lower)) ^ roundConstants[roundStart + 0];
-
                     uint temp1_0 = LoadValue(lookupTable, ExtractByte3(v0P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v1P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v1P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v0P.Upper)) ^ roundConstants[roundStart + 1];
                     uint temp2_0 = LoadValue(lookupTable, ExtractByte3(v0P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v0P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v1P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v1P.Lower)) ^ roundConstants[roundStart + 2];
                     uint temp3_0 = LoadValue(lookupTable, ExtractByte3(v1P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v0P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v0P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v1P.Upper)) ^ roundConstants[roundStart + 3];
