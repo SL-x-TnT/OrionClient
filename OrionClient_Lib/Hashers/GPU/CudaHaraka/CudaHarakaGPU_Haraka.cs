@@ -38,11 +38,19 @@ namespace OrionClientLib.Hashers.GPU.Baseline
             var s_1 = tTable[idx + HashxBlockSize];
             var s_2 = tTable[idx + HashxBlockSize * 2];
             var s_3 = tTable[idx + HashxBlockSize * 3];
+            //var s_4 = tTable[idx + HashxBlockSize * 4];
+            //var s_5 = tTable[idx + HashxBlockSize * 5];
+            //var s_6 = tTable[idx + HashxBlockSize * 6];
+            //var s_7 = tTable[idx + HashxBlockSize * 7];
 
             tShared[idx] = s_0;
             tShared[idx + HashxBlockSize] = s_1;
             tShared[idx + HashxBlockSize * 2] = s_2;
             tShared[idx + HashxBlockSize * 3] = s_3;
+            //tShared[idx + HashxBlockSize * 4] = s_4;
+            //tShared[idx + HashxBlockSize * 5] = s_5;
+            //tShared[idx + HashxBlockSize * 6] = s_6;
+            //tShared[idx + HashxBlockSize * 7] = s_7;
 
 
             for (int i = idx; i < 192; i += HashxBlockSize)
@@ -95,7 +103,7 @@ namespace OrionClientLib.Hashers.GPU.Baseline
 
             ulong xor = v1 ^ v3 ^ s.V0 ^ s.V2;
 
-            var v0P =  IntrinsicMath.Decompose(v0);
+            var v0P = IntrinsicMath.Decompose(v0);
             var v1P = IntrinsicMath.Decompose(v1);
             var v2P = IntrinsicMath.Decompose(v2);
             var v3P = IntrinsicMath.Decompose(v3);
@@ -104,441 +112,85 @@ namespace OrionClientLib.Hashers.GPU.Baseline
             var v6P = IntrinsicMath.Decompose(s.V2);
             var v7P = IntrinsicMath.Decompose(s.V3);
 
+            var tester = LocalMemory.Allocate<uint>(16);
 
-            //for(int i =0; i < 4; i++)
+            int roundStart = 0;
+            for (int i = 0; i < 6; i++)
             {
-                int roundStart = 0;
 
                 #region Round 1
 
                 {
                     uint temp0_0 = LoadValue(lookupTable, ExtractByte3(v1P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v1P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v0P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v0P.Lower)) ^ roundConstants[roundStart + 0];
-
                     uint temp1_0 = LoadValue(lookupTable, ExtractByte3(v0P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v1P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v1P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v0P.Upper)) ^ roundConstants[roundStart + 1];
                     uint temp2_0 = LoadValue(lookupTable, ExtractByte3(v0P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v0P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v1P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v1P.Lower)) ^ roundConstants[roundStart + 2];
                     uint temp3_0 = LoadValue(lookupTable, ExtractByte3(v1P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v0P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v0P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v1P.Upper)) ^ roundConstants[roundStart + 3];
+                    tester[0] = LoadValue(lookupTable, ExtractByte3(temp3_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_0))) ^ roundConstants[roundStart + 16];
+                    tester[1] = LoadValue(lookupTable, ExtractByte3(temp0_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_0))) ^ roundConstants[roundStart + 17];
+                    tester[2] = LoadValue(lookupTable, ExtractByte3(temp1_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_0))) ^ roundConstants[roundStart + 18];
+                    v0P.Lower = LoadValue(lookupTable, ExtractByte3(temp2_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_0))) ^ roundConstants[roundStart + 19];
+
                     uint temp0_1 = LoadValue(lookupTable, ExtractByte3(v3P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v3P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v2P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v2P.Lower)) ^ roundConstants[roundStart + 4];
                     uint temp1_1 = LoadValue(lookupTable, ExtractByte3(v2P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v3P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v3P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v2P.Upper)) ^ roundConstants[roundStart + 5];
                     uint temp2_1 = LoadValue(lookupTable, ExtractByte3(v2P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v2P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v3P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v3P.Lower)) ^ roundConstants[roundStart + 6];
                     uint temp3_1 = LoadValue(lookupTable, ExtractByte3(v3P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v2P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v2P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v3P.Upper)) ^ roundConstants[roundStart + 7];
+                    v3P.Upper = LoadValue(lookupTable, ExtractByte3(temp3_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_1))) ^ roundConstants[roundStart + 20];
+                    tester[5] = LoadValue(lookupTable, ExtractByte3(temp0_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_1))) ^ roundConstants[roundStart + 21];
+                    tester[6] = LoadValue(lookupTable, ExtractByte3(temp1_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_1))) ^ roundConstants[roundStart + 22];
+                    v1P.Lower = LoadValue(lookupTable, ExtractByte3(temp2_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_1))) ^ roundConstants[roundStart + 23];
+
+                    v2P.Upper = tester[0];//4
+
                     uint temp0_2 = LoadValue(lookupTable, ExtractByte3(v5P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v5P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v4P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v4P.Lower)) ^ roundConstants[roundStart + 8];
                     uint temp1_2 = LoadValue(lookupTable, ExtractByte3(v4P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v5P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v5P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v4P.Upper)) ^ roundConstants[roundStart + 9];
                     uint temp2_2 = LoadValue(lookupTable, ExtractByte3(v4P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v4P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v5P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v5P.Lower)) ^ roundConstants[roundStart + 10];
                     uint temp3_2 = LoadValue(lookupTable, ExtractByte3(v5P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v4P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v4P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v5P.Upper)) ^ roundConstants[roundStart + 11];
+                    v2P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_2))) ^ roundConstants[roundStart + 24];
+                    v4P.Lower = LoadValue(lookupTable, ExtractByte3(temp0_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_2))) ^ roundConstants[roundStart + 25];
+                    tester[10] = LoadValue(lookupTable, ExtractByte3(temp1_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_2))) ^ roundConstants[roundStart + 26];
+                    v0P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_2))) ^ roundConstants[roundStart + 27];
+ 
+                    v4P.Upper = tester[1];//3
+                    v5P.Upper = tester[5];
+
                     uint temp0_3 = LoadValue(lookupTable, ExtractByte3(v7P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v7P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v6P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v6P.Lower)) ^ roundConstants[roundStart + 12];
                     uint temp1_3 = LoadValue(lookupTable, ExtractByte3(v6P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v7P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v7P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v6P.Upper)) ^ roundConstants[roundStart + 13];
                     uint temp2_3 = LoadValue(lookupTable, ExtractByte3(v6P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v6P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v7P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v7P.Lower)) ^ roundConstants[roundStart + 14];
                     uint temp3_3 = LoadValue(lookupTable, ExtractByte3(v7P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v6P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v6P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v7P.Upper)) ^ roundConstants[roundStart + 15];
 
-                    v0P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_0))) ^ roundConstants[roundStart + 16];
-                    v0P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_0))) ^ roundConstants[roundStart + 17];
-                    v1P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_0))) ^ roundConstants[roundStart + 18];
-                    v1P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_0))) ^ roundConstants[roundStart + 19];
-                    v2P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_1))) ^ roundConstants[roundStart + 20];
-                    v2P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_1))) ^ roundConstants[roundStart + 21];
-                    v3P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_1))) ^ roundConstants[roundStart + 22];
-                    v3P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_1))) ^ roundConstants[roundStart + 23];
-                    v4P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_2))) ^ roundConstants[roundStart + 24];
-                    v4P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_2))) ^ roundConstants[roundStart + 25];
-                    v5P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_2))) ^ roundConstants[roundStart + 26];
-                    v5P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_2))) ^ roundConstants[roundStart + 27];
-                    v6P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_3))) ^ roundConstants[roundStart + 28];
-                    v6P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_3))) ^ roundConstants[roundStart + 29];
-                    v7P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_3))) ^ roundConstants[roundStart + 30];
-                    v7P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_3))) ^ roundConstants[roundStart + 31];
+                    v3P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_3))) ^ roundConstants[roundStart + 28];
+                    v5P.Lower = LoadValue(lookupTable, ExtractByte3(temp0_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_3))) ^ roundConstants[roundStart + 29];
+                    v7P.Upper = LoadValue(lookupTable, ExtractByte3(temp1_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_3))) ^ roundConstants[roundStart + 30];
+                    v1P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_3))) ^ roundConstants[roundStart + 31];
+
+
+                    v6P.Lower = tester[2];//2
+                    v6P.Upper = tester[10];//1
+                    v7P.Lower = tester[6];//1
+
+                    //var t0 = v0P;
+                    //var t1 = v1P;
+                    //var t2 = v2P;
+                    //var t3 = v3P;
+                    //var t4 = v4P;
+                    //var t5 = v5P;
+                    //var t6 = v6P;
+                    //var t7 = v7P;
 
 
 
-                    var t0 = v0P;
-                    var t1 = v1P;
-                    var t2 = v2P;
-                    var t3 = v3P;
-                    var t4 = v4P;
-                    var t5 = v5P;
-                    var t6 = v6P;
-                    var t7 = v7P;
 
-                    v0P.Lower = t1.Upper;
-                    v0P.Upper = t5.Upper;
-                    v1P.Lower = t3.Upper;
-                    v1P.Upper = t7.Upper;
-                    v2P.Lower = t4.Lower;
-                    v2P.Upper = t0.Lower;
-                    v3P.Lower = t6.Lower;
-                    v3P.Upper = t2.Lower;
-                    v4P.Lower = t4.Upper;
-                    v4P.Upper = t0.Upper;
-                    v5P.Lower = t6.Upper;
-                    v5P.Upper = t2.Upper;
-                    v6P.Lower = t1.Lower;
-                    v6P.Upper = t5.Lower;
-                    v7P.Upper = t7.Lower;
-                    v7P.Lower = t3.Lower;
+
+
 
 
                     roundStart += 32;
+
+                    Warp.Barrier();
                 }
 
                 #endregion
 
-                #region Round 2
-
-                {
-                    uint temp0_0 = LoadValue(lookupTable, ExtractByte3(v1P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v1P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v0P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v0P.Lower)) ^ roundConstants[roundStart + 0];
-
-                    uint temp1_0 = LoadValue(lookupTable, ExtractByte3(v0P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v1P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v1P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v0P.Upper)) ^ roundConstants[roundStart + 1];
-                    uint temp2_0 = LoadValue(lookupTable, ExtractByte3(v0P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v0P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v1P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v1P.Lower)) ^ roundConstants[roundStart + 2];
-                    uint temp3_0 = LoadValue(lookupTable, ExtractByte3(v1P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v0P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v0P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v1P.Upper)) ^ roundConstants[roundStart + 3];
-                    uint temp0_1 = LoadValue(lookupTable, ExtractByte3(v3P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v3P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v2P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v2P.Lower)) ^ roundConstants[roundStart + 4];
-                    uint temp1_1 = LoadValue(lookupTable, ExtractByte3(v2P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v3P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v3P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v2P.Upper)) ^ roundConstants[roundStart + 5];
-                    uint temp2_1 = LoadValue(lookupTable, ExtractByte3(v2P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v2P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v3P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v3P.Lower)) ^ roundConstants[roundStart + 6];
-                    uint temp3_1 = LoadValue(lookupTable, ExtractByte3(v3P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v2P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v2P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v3P.Upper)) ^ roundConstants[roundStart + 7];
-                    uint temp0_2 = LoadValue(lookupTable, ExtractByte3(v5P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v5P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v4P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v4P.Lower)) ^ roundConstants[roundStart + 8];
-                    uint temp1_2 = LoadValue(lookupTable, ExtractByte3(v4P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v5P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v5P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v4P.Upper)) ^ roundConstants[roundStart + 9];
-                    uint temp2_2 = LoadValue(lookupTable, ExtractByte3(v4P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v4P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v5P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v5P.Lower)) ^ roundConstants[roundStart + 10];
-                    uint temp3_2 = LoadValue(lookupTable, ExtractByte3(v5P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v4P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v4P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v5P.Upper)) ^ roundConstants[roundStart + 11];
-                    uint temp0_3 = LoadValue(lookupTable, ExtractByte3(v7P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v7P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v6P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v6P.Lower)) ^ roundConstants[roundStart + 12];
-                    uint temp1_3 = LoadValue(lookupTable, ExtractByte3(v6P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v7P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v7P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v6P.Upper)) ^ roundConstants[roundStart + 13];
-                    uint temp2_3 = LoadValue(lookupTable, ExtractByte3(v6P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v6P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v7P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v7P.Lower)) ^ roundConstants[roundStart + 14];
-                    uint temp3_3 = LoadValue(lookupTable, ExtractByte3(v7P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v6P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v6P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v7P.Upper)) ^ roundConstants[roundStart + 15];
-
-                    v0P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_0))) ^ roundConstants[roundStart + 16];
-                    v0P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_0))) ^ roundConstants[roundStart + 17];
-                    v1P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_0))) ^ roundConstants[roundStart + 18];
-                    v1P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_0))) ^ roundConstants[roundStart + 19];
-                    v2P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_1))) ^ roundConstants[roundStart + 20];
-                    v2P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_1))) ^ roundConstants[roundStart + 21];
-                    v3P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_1))) ^ roundConstants[roundStart + 22];
-                    v3P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_1))) ^ roundConstants[roundStart + 23];
-                    v4P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_2))) ^ roundConstants[roundStart + 24];
-                    v4P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_2))) ^ roundConstants[roundStart + 25];
-                    v5P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_2))) ^ roundConstants[roundStart + 26];
-                    v5P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_2))) ^ roundConstants[roundStart + 27];
-                    v6P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_3))) ^ roundConstants[roundStart + 28];
-                    v6P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_3))) ^ roundConstants[roundStart + 29];
-                    v7P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_3))) ^ roundConstants[roundStart + 30];
-                    v7P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_3))) ^ roundConstants[roundStart + 31];
-
-
-
-                    var t0 = v0P;
-                    var t1 = v1P;
-                    var t2 = v2P;
-                    var t3 = v3P;
-                    var t4 = v4P;
-                    var t5 = v5P;
-                    var t6 = v6P;
-                    var t7 = v7P;
-
-                    v0P.Lower = t1.Upper;
-                    v0P.Upper = t5.Upper;
-                    v1P.Lower = t3.Upper;
-                    v1P.Upper = t7.Upper;
-                    v2P.Lower = t4.Lower;
-                    v2P.Upper = t0.Lower;
-                    v3P.Lower = t6.Lower;
-                    v3P.Upper = t2.Lower;
-                    v4P.Lower = t4.Upper;
-                    v4P.Upper = t0.Upper;
-                    v5P.Lower = t6.Upper;
-                    v5P.Upper = t2.Upper;
-                    v6P.Lower = t1.Lower;
-                    v6P.Upper = t5.Lower;
-                    v7P.Upper = t7.Lower;
-                    v7P.Lower = t3.Lower;
-
-
-                    roundStart += 32;
-                }
-
-                #endregion
-
-                #region Round 3
-
-                {
-                    uint temp0_0 = LoadValue(lookupTable, ExtractByte3(v1P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v1P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v0P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v0P.Lower)) ^ roundConstants[roundStart + 0];
-
-                    uint temp1_0 = LoadValue(lookupTable, ExtractByte3(v0P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v1P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v1P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v0P.Upper)) ^ roundConstants[roundStart + 1];
-                    uint temp2_0 = LoadValue(lookupTable, ExtractByte3(v0P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v0P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v1P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v1P.Lower)) ^ roundConstants[roundStart + 2];
-                    uint temp3_0 = LoadValue(lookupTable, ExtractByte3(v1P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v0P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v0P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v1P.Upper)) ^ roundConstants[roundStart + 3];
-                    uint temp0_1 = LoadValue(lookupTable, ExtractByte3(v3P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v3P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v2P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v2P.Lower)) ^ roundConstants[roundStart + 4];
-                    uint temp1_1 = LoadValue(lookupTable, ExtractByte3(v2P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v3P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v3P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v2P.Upper)) ^ roundConstants[roundStart + 5];
-                    uint temp2_1 = LoadValue(lookupTable, ExtractByte3(v2P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v2P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v3P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v3P.Lower)) ^ roundConstants[roundStart + 6];
-                    uint temp3_1 = LoadValue(lookupTable, ExtractByte3(v3P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v2P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v2P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v3P.Upper)) ^ roundConstants[roundStart + 7];
-                    uint temp0_2 = LoadValue(lookupTable, ExtractByte3(v5P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v5P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v4P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v4P.Lower)) ^ roundConstants[roundStart + 8];
-                    uint temp1_2 = LoadValue(lookupTable, ExtractByte3(v4P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v5P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v5P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v4P.Upper)) ^ roundConstants[roundStart + 9];
-                    uint temp2_2 = LoadValue(lookupTable, ExtractByte3(v4P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v4P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v5P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v5P.Lower)) ^ roundConstants[roundStart + 10];
-                    uint temp3_2 = LoadValue(lookupTable, ExtractByte3(v5P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v4P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v4P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v5P.Upper)) ^ roundConstants[roundStart + 11];
-                    uint temp0_3 = LoadValue(lookupTable, ExtractByte3(v7P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v7P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v6P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v6P.Lower)) ^ roundConstants[roundStart + 12];
-                    uint temp1_3 = LoadValue(lookupTable, ExtractByte3(v6P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v7P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v7P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v6P.Upper)) ^ roundConstants[roundStart + 13];
-                    uint temp2_3 = LoadValue(lookupTable, ExtractByte3(v6P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v6P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v7P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v7P.Lower)) ^ roundConstants[roundStart + 14];
-                    uint temp3_3 = LoadValue(lookupTable, ExtractByte3(v7P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v6P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v6P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v7P.Upper)) ^ roundConstants[roundStart + 15];
-
-                    v0P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_0))) ^ roundConstants[roundStart + 16];
-                    v0P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_0))) ^ roundConstants[roundStart + 17];
-                    v1P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_0))) ^ roundConstants[roundStart + 18];
-                    v1P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_0))) ^ roundConstants[roundStart + 19];
-                    v2P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_1))) ^ roundConstants[roundStart + 20];
-                    v2P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_1))) ^ roundConstants[roundStart + 21];
-                    v3P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_1))) ^ roundConstants[roundStart + 22];
-                    v3P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_1))) ^ roundConstants[roundStart + 23];
-                    v4P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_2))) ^ roundConstants[roundStart + 24];
-                    v4P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_2))) ^ roundConstants[roundStart + 25];
-                    v5P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_2))) ^ roundConstants[roundStart + 26];
-                    v5P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_2))) ^ roundConstants[roundStart + 27];
-                    v6P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_3))) ^ roundConstants[roundStart + 28];
-                    v6P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_3))) ^ roundConstants[roundStart + 29];
-                    v7P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_3))) ^ roundConstants[roundStart + 30];
-                    v7P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_3))) ^ roundConstants[roundStart + 31];
-
-
-
-                    var t0 = v0P;
-                    var t1 = v1P;
-                    var t2 = v2P;
-                    var t3 = v3P;
-                    var t4 = v4P;
-                    var t5 = v5P;
-                    var t6 = v6P;
-                    var t7 = v7P;
-
-                    v0P.Lower = t1.Upper;
-                    v0P.Upper = t5.Upper;
-                    v1P.Lower = t3.Upper;
-                    v1P.Upper = t7.Upper;
-                    v2P.Lower = t4.Lower;
-                    v2P.Upper = t0.Lower;
-                    v3P.Lower = t6.Lower;
-                    v3P.Upper = t2.Lower;
-                    v4P.Lower = t4.Upper;
-                    v4P.Upper = t0.Upper;
-                    v5P.Lower = t6.Upper;
-                    v5P.Upper = t2.Upper;
-                    v6P.Lower = t1.Lower;
-                    v6P.Upper = t5.Lower;
-                    v7P.Upper = t7.Lower;
-                    v7P.Lower = t3.Lower;
-
-
-                    roundStart += 32;
-                }
-
-                #endregion
-
-                #region Round 4
-
-                {
-                    uint temp0_0 = LoadValue(lookupTable, ExtractByte3(v1P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v1P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v0P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v0P.Lower)) ^ roundConstants[roundStart + 0];
-                    uint temp1_0 = LoadValue(lookupTable, ExtractByte3(v0P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v1P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v1P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v0P.Upper)) ^ roundConstants[roundStart + 1];
-                    uint temp2_0 = LoadValue(lookupTable, ExtractByte3(v0P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v0P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v1P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v1P.Lower)) ^ roundConstants[roundStart + 2];
-                    uint temp3_0 = LoadValue(lookupTable, ExtractByte3(v1P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v0P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v0P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v1P.Upper)) ^ roundConstants[roundStart + 3];
-                    uint temp0_1 = LoadValue(lookupTable, ExtractByte3(v3P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v3P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v2P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v2P.Lower)) ^ roundConstants[roundStart + 4];
-                    uint temp1_1 = LoadValue(lookupTable, ExtractByte3(v2P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v3P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v3P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v2P.Upper)) ^ roundConstants[roundStart + 5];
-                    uint temp2_1 = LoadValue(lookupTable, ExtractByte3(v2P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v2P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v3P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v3P.Lower)) ^ roundConstants[roundStart + 6];
-                    uint temp3_1 = LoadValue(lookupTable, ExtractByte3(v3P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v2P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v2P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v3P.Upper)) ^ roundConstants[roundStart + 7];
-                    uint temp0_2 = LoadValue(lookupTable, ExtractByte3(v5P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v5P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v4P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v4P.Lower)) ^ roundConstants[roundStart + 8];
-                    uint temp1_2 = LoadValue(lookupTable, ExtractByte3(v4P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v5P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v5P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v4P.Upper)) ^ roundConstants[roundStart + 9];
-                    uint temp2_2 = LoadValue(lookupTable, ExtractByte3(v4P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v4P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v5P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v5P.Lower)) ^ roundConstants[roundStart + 10];
-                    uint temp3_2 = LoadValue(lookupTable, ExtractByte3(v5P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v4P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v4P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v5P.Upper)) ^ roundConstants[roundStart + 11];
-                    uint temp0_3 = LoadValue(lookupTable, ExtractByte3(v7P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v7P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v6P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v6P.Lower)) ^ roundConstants[roundStart + 12];
-                    uint temp1_3 = LoadValue(lookupTable, ExtractByte3(v6P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v7P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v7P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v6P.Upper)) ^ roundConstants[roundStart + 13];
-                    uint temp2_3 = LoadValue(lookupTable, ExtractByte3(v6P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v6P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v7P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v7P.Lower)) ^ roundConstants[roundStart + 14];
-                    uint temp3_3 = LoadValue(lookupTable, ExtractByte3(v7P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v6P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v6P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v7P.Upper)) ^ roundConstants[roundStart + 15];
-
-                    v0P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_0))) ^ roundConstants[roundStart + 16];
-                    v0P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_0))) ^ roundConstants[roundStart + 17];
-                    v1P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_0))) ^ roundConstants[roundStart + 18];
-                    v1P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_0))) ^ roundConstants[roundStart + 19];
-                    v2P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_1))) ^ roundConstants[roundStart + 20];
-                    v2P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_1))) ^ roundConstants[roundStart + 21];
-                    v3P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_1))) ^ roundConstants[roundStart + 22];
-                    v3P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_1))) ^ roundConstants[roundStart + 23];
-                    v4P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_2))) ^ roundConstants[roundStart + 24];
-                    v4P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_2))) ^ roundConstants[roundStart + 25];
-                    v5P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_2))) ^ roundConstants[roundStart + 26];
-                    v5P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_2))) ^ roundConstants[roundStart + 27];
-                    v6P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_3))) ^ roundConstants[roundStart + 28];
-                    v6P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_3))) ^ roundConstants[roundStart + 29];
-                    v7P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_3))) ^ roundConstants[roundStart + 30];
-                    v7P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_3))) ^ roundConstants[roundStart + 31];
-
-
-
-                    var t0 = v0P;
-                    var t1 = v1P;
-                    var t2 = v2P;
-                    var t3 = v3P;
-                    var t4 = v4P;
-                    var t5 = v5P;
-                    var t6 = v6P;
-                    var t7 = v7P;
-
-                    v0P.Lower = t1.Upper;
-                    v0P.Upper = t5.Upper;
-                    v1P.Lower = t3.Upper;
-                    v1P.Upper = t7.Upper;
-                    v2P.Lower = t4.Lower;
-                    v2P.Upper = t0.Lower;
-                    v3P.Lower = t6.Lower;
-                    v3P.Upper = t2.Lower;
-                    v4P.Lower = t4.Upper;
-                    v4P.Upper = t0.Upper;
-                    v5P.Lower = t6.Upper;
-                    v5P.Upper = t2.Upper;
-                    v6P.Lower = t1.Lower;
-                    v6P.Upper = t5.Lower;
-                    v7P.Upper = t7.Lower;
-                    v7P.Lower = t3.Lower;
-
-
-                    roundStart += 32;
-                }
-
-                #endregion
-
-                #region Round 5
-
-                {
-                    uint temp0_0 = LoadValue(lookupTable, ExtractByte3(v1P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v1P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v0P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v0P.Lower)) ^ roundConstants[roundStart + 0];
-
-                    uint temp1_0 = LoadValue(lookupTable, ExtractByte3(v0P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v1P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v1P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v0P.Upper)) ^ roundConstants[roundStart + 1];
-                    uint temp2_0 = LoadValue(lookupTable, ExtractByte3(v0P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v0P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v1P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v1P.Lower)) ^ roundConstants[roundStart + 2];
-                    uint temp3_0 = LoadValue(lookupTable, ExtractByte3(v1P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v0P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v0P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v1P.Upper)) ^ roundConstants[roundStart + 3];
-                    uint temp0_1 = LoadValue(lookupTable, ExtractByte3(v3P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v3P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v2P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v2P.Lower)) ^ roundConstants[roundStart + 4];
-                    uint temp1_1 = LoadValue(lookupTable, ExtractByte3(v2P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v3P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v3P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v2P.Upper)) ^ roundConstants[roundStart + 5];
-                    uint temp2_1 = LoadValue(lookupTable, ExtractByte3(v2P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v2P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v3P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v3P.Lower)) ^ roundConstants[roundStart + 6];
-                    uint temp3_1 = LoadValue(lookupTable, ExtractByte3(v3P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v2P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v2P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v3P.Upper)) ^ roundConstants[roundStart + 7];
-                    uint temp0_2 = LoadValue(lookupTable, ExtractByte3(v5P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v5P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v4P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v4P.Lower)) ^ roundConstants[roundStart + 8];
-                    uint temp1_2 = LoadValue(lookupTable, ExtractByte3(v4P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v5P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v5P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v4P.Upper)) ^ roundConstants[roundStart + 9];
-                    uint temp2_2 = LoadValue(lookupTable, ExtractByte3(v4P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v4P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v5P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v5P.Lower)) ^ roundConstants[roundStart + 10];
-                    uint temp3_2 = LoadValue(lookupTable, ExtractByte3(v5P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v4P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v4P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v5P.Upper)) ^ roundConstants[roundStart + 11];
-                    uint temp0_3 = LoadValue(lookupTable, ExtractByte3(v7P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v7P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v6P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v6P.Lower)) ^ roundConstants[roundStart + 12];
-                    uint temp1_3 = LoadValue(lookupTable, ExtractByte3(v6P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v7P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v7P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v6P.Upper)) ^ roundConstants[roundStart + 13];
-                    uint temp2_3 = LoadValue(lookupTable, ExtractByte3(v6P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v6P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v7P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v7P.Lower)) ^ roundConstants[roundStart + 14];
-                    uint temp3_3 = LoadValue(lookupTable, ExtractByte3(v7P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v6P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v6P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v7P.Upper)) ^ roundConstants[roundStart + 15];
-
-                    v0P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_0))) ^ roundConstants[roundStart + 16];
-                    v0P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_0))) ^ roundConstants[roundStart + 17];
-                    v1P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_0))) ^ roundConstants[roundStart + 18];
-                    v1P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_0))) ^ roundConstants[roundStart + 19];
-                    v2P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_1))) ^ roundConstants[roundStart + 20];
-                    v2P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_1))) ^ roundConstants[roundStart + 21];
-                    v3P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_1))) ^ roundConstants[roundStart + 22];
-                    v3P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_1))) ^ roundConstants[roundStart + 23];
-                    v4P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_2))) ^ roundConstants[roundStart + 24];
-                    v4P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_2))) ^ roundConstants[roundStart + 25];
-                    v5P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_2))) ^ roundConstants[roundStart + 26];
-                    v5P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_2))) ^ roundConstants[roundStart + 27];
-                    v6P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_3))) ^ roundConstants[roundStart + 28];
-                    v6P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_3))) ^ roundConstants[roundStart + 29];
-                    v7P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_3))) ^ roundConstants[roundStart + 30];
-                    v7P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_3))) ^ roundConstants[roundStart + 31];
-
-
-
-                    var t0 = v0P;
-                    var t1 = v1P;
-                    var t2 = v2P;
-                    var t3 = v3P;
-                    var t4 = v4P;
-                    var t5 = v5P;
-                    var t6 = v6P;
-                    var t7 = v7P;
-
-                    v0P.Lower = t1.Upper;
-                    v0P.Upper = t5.Upper;
-                    v1P.Lower = t3.Upper;
-                    v1P.Upper = t7.Upper;
-                    v2P.Lower = t4.Lower;
-                    v2P.Upper = t0.Lower;
-                    v3P.Lower = t6.Lower;
-                    v3P.Upper = t2.Lower;
-                    v4P.Lower = t4.Upper;
-                    v4P.Upper = t0.Upper;
-                    v5P.Lower = t6.Upper;
-                    v5P.Upper = t2.Upper;
-                    v6P.Lower = t1.Lower;
-                    v6P.Upper = t5.Lower;
-                    v7P.Upper = t7.Lower;
-                    v7P.Lower = t3.Lower;
-
-
-                    roundStart += 32;
-                }
-
-                #endregion
-
-                #region Round 6
-
-                {
-                    uint temp0_0 = LoadValue(lookupTable, ExtractByte3(v1P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v1P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v0P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v0P.Lower)) ^ roundConstants[roundStart + 0];
-
-                    uint temp1_0 = LoadValue(lookupTable, ExtractByte3(v0P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v1P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v1P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v0P.Upper)) ^ roundConstants[roundStart + 1];
-                    uint temp2_0 = LoadValue(lookupTable, ExtractByte3(v0P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v0P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v1P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v1P.Lower)) ^ roundConstants[roundStart + 2];
-                    uint temp3_0 = LoadValue(lookupTable, ExtractByte3(v1P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v0P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v0P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v1P.Upper)) ^ roundConstants[roundStart + 3];
-                    uint temp0_1 = LoadValue(lookupTable, ExtractByte3(v3P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v3P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v2P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v2P.Lower)) ^ roundConstants[roundStart + 4];
-                    uint temp1_1 = LoadValue(lookupTable, ExtractByte3(v2P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v3P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v3P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v2P.Upper)) ^ roundConstants[roundStart + 5];
-                    uint temp2_1 = LoadValue(lookupTable, ExtractByte3(v2P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v2P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v3P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v3P.Lower)) ^ roundConstants[roundStart + 6];
-                    uint temp3_1 = LoadValue(lookupTable, ExtractByte3(v3P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v2P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v2P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v3P.Upper)) ^ roundConstants[roundStart + 7];
-                    uint temp0_2 = LoadValue(lookupTable, ExtractByte3(v5P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v5P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v4P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v4P.Lower)) ^ roundConstants[roundStart + 8];
-                    uint temp1_2 = LoadValue(lookupTable, ExtractByte3(v4P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v5P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v5P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v4P.Upper)) ^ roundConstants[roundStart + 9];
-                    uint temp2_2 = LoadValue(lookupTable, ExtractByte3(v4P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v4P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v5P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v5P.Lower)) ^ roundConstants[roundStart + 10];
-                    uint temp3_2 = LoadValue(lookupTable, ExtractByte3(v5P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v4P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v4P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v5P.Upper)) ^ roundConstants[roundStart + 11];
-                    uint temp0_3 = LoadValue(lookupTable, ExtractByte3(v7P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v7P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v6P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v6P.Lower)) ^ roundConstants[roundStart + 12];
-                    uint temp1_3 = LoadValue(lookupTable, ExtractByte3(v6P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v7P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v7P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v6P.Upper)) ^ roundConstants[roundStart + 13];
-                    uint temp2_3 = LoadValue(lookupTable, ExtractByte3(v6P.Upper), 24) ^ LoadValue(lookupTable, ExtractByte2(v6P.Lower), 16) ^ LoadValue(lookupTable, ExtractByte1(v7P.Upper), 8) ^ LoadValue(lookupTable, ExtractByte0(v7P.Lower)) ^ roundConstants[roundStart + 14];
-                    uint temp3_3 = LoadValue(lookupTable, ExtractByte3(v7P.Lower), 24) ^ LoadValue(lookupTable, ExtractByte2(v6P.Upper), 16) ^ LoadValue(lookupTable, ExtractByte1(v6P.Lower), 8) ^ LoadValue(lookupTable, ExtractByte0(v7P.Upper)) ^ roundConstants[roundStart + 15];
-
-                    v0P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_0))) ^ roundConstants[roundStart + 16];
-                    v0P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_0))) ^ roundConstants[roundStart + 17];
-                    v1P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_0))) ^ roundConstants[roundStart + 18];
-                    v1P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_0), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_0), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_0), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_0))) ^ roundConstants[roundStart + 19];
-                    v2P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_1))) ^ roundConstants[roundStart + 20];
-                    v2P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_1))) ^ roundConstants[roundStart + 21];
-                    v3P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_1))) ^ roundConstants[roundStart + 22];
-                    v3P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_1), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_1), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_1), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_1))) ^ roundConstants[roundStart + 23];
-                    v4P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_2))) ^ roundConstants[roundStart + 24];
-                    v4P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_2))) ^ roundConstants[roundStart + 25];
-                    v5P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_2))) ^ roundConstants[roundStart + 26];
-                    v5P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_2), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_2), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_2), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_2))) ^ roundConstants[roundStart + 27];
-                    v6P.Lower = LoadValue(lookupTable, ExtractByte3(temp3_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp2_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp1_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp0_3))) ^ roundConstants[roundStart + 28];
-                    v6P.Upper = LoadValue(lookupTable, ExtractByte3(temp0_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp3_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp2_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp1_3))) ^ roundConstants[roundStart + 29];
-                    v7P.Lower = LoadValue(lookupTable, ExtractByte3(temp1_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp0_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp3_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp2_3))) ^ roundConstants[roundStart + 30];
-                    v7P.Upper = LoadValue(lookupTable, ExtractByte3(temp2_3), 24) ^ LoadValue(lookupTable, ExtractByte2(temp1_3), 16) ^ LoadValue(lookupTable, ExtractByte1(temp0_3), 8) ^ LoadValue(lookupTable, (ExtractByte0(temp3_3))) ^ roundConstants[roundStart + 31];
-
-
-
-                    var t0 = v0P;
-                    var t1 = v1P;
-                    var t2 = v2P;
-                    var t3 = v3P;
-                    var t4 = v4P;
-                    var t5 = v5P;
-                    var t6 = v6P;
-                    var t7 = v7P;
-
-                    v0P.Lower = t1.Upper;
-                    v0P.Upper = t5.Upper;
-                    v1P.Lower = t3.Upper;
-                    v1P.Upper = t7.Upper;
-                    v2P.Lower = t4.Lower;
-                    v2P.Upper = t0.Lower;
-                    v3P.Lower = t6.Lower;
-                    v3P.Upper = t2.Lower;
-                    v4P.Lower = t4.Upper;
-                    v4P.Upper = t0.Upper;
-                    v5P.Lower = t6.Upper;
-                    v5P.Upper = t2.Upper;
-                    v6P.Lower = t1.Lower;
-                    v6P.Upper = t5.Lower;
-                    v7P.Upper = t7.Lower;
-                    v7P.Lower = t3.Lower;
-
-
-                    roundStart += 32;
-                }
-
-                #endregion
             }
 
             var temp = IntrinsicMath.Decompose(xor);

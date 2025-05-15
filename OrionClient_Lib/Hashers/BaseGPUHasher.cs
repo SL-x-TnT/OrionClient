@@ -107,7 +107,7 @@ namespace OrionClientLib.Hashers
 
             _context = Context.Create(builder => builder.AllAccelerators().Profiling()//.IOOperations()
             .Inlining(InliningMode.Aggressive)
-            .Optimize(OptimizationLevel.O0)
+            .Optimize(OptimizationLevel.O1)
             .DebugConfig(false, false, DebugSymbolsMode.Disabled, false, false)
             );
 
@@ -641,6 +641,7 @@ namespace OrionClientLib.Hashers
                         if (kernel is CudaKernel cudaKernel)
                         {
                             CudaAPI.CurrentAPI.SetFuncCacheConfig(cudaKernel.FunctionPtr, _hashxCacheConfiguration);
+                            //CudaAPI.CurrentAPI.SetFuncAttribute(cudaKernel.FunctionPtr, CudaFuncAttribute.MaxDynamicSharedSizeBytes, 58112);
                         }
                     }
                 }
