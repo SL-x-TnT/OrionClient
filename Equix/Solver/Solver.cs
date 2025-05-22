@@ -25,6 +25,10 @@ namespace DrillX.Solver
         [DllImport("C_Avx512_lib.dll", EntryPoint = "FullHash_AVX512", CallingConvention = CallingConvention.StdCall)]
         static unsafe extern void Haraka_VAES_AVX512(ulong* key, ulong* output);
 
+        [DllImport("C_Avx512_lib.dll", EntryPoint = "FullHash_AVX2", CallingConvention = CallingConvention.StdCall)]
+        static unsafe extern void Haraka_VAES_AVX2(ulong* key, ulong* output);
+
+
         //[DllImport("libequix", EntryPoint = "equix_solver_full_avx512", CallingConvention = CallingConvention.StdCall)]
         //static unsafe extern int C_Solve_Full_Avx512(void* func, byte* heap, EquixSolution* output, ulong* keyReg);
 
@@ -785,6 +789,23 @@ namespace DrillX.Solver
 
             return sols;
         }
+
+        public unsafe int Solve_Opt_Haraka_VAES_AVX2(Haraka.HarakaSiphash* key, ulong* values, byte* heap, EquixSolution* solutions, ulong* rk)
+        {
+            Radix* rs = (Radix*)heap;
+
+            ulong* stageA = values;
+            ulong* stageB = rs->Stage1;
+
+            Haraka_VAES_AVX2((ulong*)key, values);
+
+            int stage1Count = SortPass1(stageA, rs->Counts, rs->TempCounts, stageB, rs->Stage1Indices, Radix.Total);
+            int stage2Count = SortPass2(stageB, rs->Counts, rs->TempCounts, stageA, stage1Count);
+            int sols = SortPass3(stageA, rs->Counts, rs->TempCounts, stageB, rs->Stage1Indices, solutions, stage2Count);
+
+            return sols;
+        }
+
 
         public unsafe int Solve_Opt_Com_Haraka(Haraka.HarakaSiphash key, ulong* values, byte* heap, EquixSolution* solutions, ulong* rk)
         {

@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics.X86;
 
 namespace OrionClient
 {
@@ -134,9 +135,10 @@ namespace OrionClient
             };
 
             _hashers = new List<IHasher>();
-            AddSupportedHasher(new ManagedCPUHarakaHasher());
-            AddSupportedHasher(new ManagedCPUHarakaHasherAVX2());
-            AddSupportedHasher(new ManagedCPUHarakaHasherVAES());
+            AddSupportedHasher(new HarakaCPUHasher());
+            AddSupportedHasher(new AVX2HarakaCPUHasher());
+            AddSupportedHasher(new VAES256HarakaCPUHasher());
+            AddSupportedHasher(new VAES512HarakaCPUHasher());
             AddSupportedHasher(new CudaHarakaGPUHasher());
             //AddSupportedHasher(new ManagedCPUHasher());
             ////AddSupportedHasher(new HybridCPUHasher());
@@ -178,7 +180,7 @@ namespace OrionClient
             _uiLayout["Logs"].Update(_logTable);
 
             #endregion
-
+            
             _settings = await Settings.LoadAsync();
             await _settings.SaveAsync();
 

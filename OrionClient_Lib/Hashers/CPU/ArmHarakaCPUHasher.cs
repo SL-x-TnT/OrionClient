@@ -10,10 +10,10 @@ using System.Runtime.Intrinsics.X86;
 
 namespace OrionClientLib.Hashers.CPU
 {
-    public unsafe class ManagedCPUHarakaHasherAVX2 : BaseCPUHasher
+    public unsafe class ArmHarakaCPUHasher : BaseCPUHasher
     {
-        public override string Name => "AES-NI + AVX2 [[C#]]";
-        public override string Description => "AES-NI implementation of DrillX w/ Haraka algorithm & AVX2 optimizations";
+        public override string Name => "AES-NI [[C#]]";
+        public override string Description => "AES-NI implementation of DrillX w/ Haraka algorithm";
         public override bool DisplaySetting => true;
 
         protected override void ExecuteThread(ExecutionData data)
@@ -64,7 +64,7 @@ namespace OrionClientLib.Hashers.CPU
 
                         Haraka.HarakaSiphash harakaKey = Haraka.BuildKey(fullChallenge, sipKey);
 
-                        int solutionCount = solver.Solve_Opt_Com_Haraka(harakaKey, (ulong*)solver.ComputeSolutions, (byte*)solver.Heap, solutions, rk);
+                        int solutionCount = solver.Solve_Opt_Haraka_Arm(harakaKey, (ulong*)solver.ComputeSolutions, (byte*)solver.Heap, solutions, rk);
 
                         //Calculate difficulty
                         for (int z = 0; z < solutionCount; z++)
@@ -107,14 +107,7 @@ namespace OrionClientLib.Hashers.CPU
 
         public override bool IsSupported()
         {
-            //if (RuntimeInformation.OSArchitecture == Architecture.Arm)
-            //{
-            //    return System.Runtime.Intrinsics.Arm.Aes.IsSupported;
-            //}
-
-            {
-                return System.Runtime.Intrinsics.X86.Aes.IsSupported && Avx2.IsSupported;
-            }
+            return System.Runtime.Intrinsics.Arm.Aes.IsSupported && AdvSimd.Arm64.IsSupported;
         }
     }
 }

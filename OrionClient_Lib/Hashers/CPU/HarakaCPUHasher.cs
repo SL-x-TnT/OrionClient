@@ -4,17 +4,16 @@ using Equix;
 using OrionClientLib.Hashers.Models;
 using System.Buffers.Binary;
 using System.Collections.Concurrent;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.Arm;
 using System.Runtime.Intrinsics.X86;
 
 namespace OrionClientLib.Hashers.CPU
 {
-    public unsafe class ManagedCPUHarakaHasherVAES : BaseCPUHasher
+    public unsafe class HarakaCPUHasher : BaseCPUHasher
     {
-        public override string Name => "VAES + AVX512 [[C#/C]]";
-        public override string Description => "VAES implementation of DrillX w/ Haraka algorithm & AVX512 optimizations";
+        public override string Name => "AES-NI [[C#]]";
+        public override string Description => "AES-NI implementation of DrillX w/ Haraka algorithm";
         public override bool DisplaySetting => true;
 
         protected override void ExecuteThread(ExecutionData data)
@@ -36,7 +35,6 @@ namespace OrionClientLib.Hashers.CPU
                 Span<ushort> testSolution = stackalloc ushort[8];
                 Span<byte> hashOutput = stackalloc byte[32];
                 Span<Haraka.HarakaSiphash> sipKey = stackalloc Haraka.HarakaSiphash[1];
-                Haraka.HarakaSiphash* sipKeyPinnable = (Haraka.HarakaSiphash*)Unsafe.AsPointer(ref sipKey.GetPinnableReference());
 
                 _info.Challenge.AsSpan().CopyTo(fullChallenge.AsSpan().Slice(8));
 
@@ -66,7 +64,7 @@ namespace OrionClientLib.Hashers.CPU
 
                         Haraka.HarakaSiphash harakaKey = Haraka.BuildKey(fullChallenge, sipKey);
 
-                        int solutionCount = solver.Solve_Opt_Haraka_VAES(sipKeyPinnable, (ulong*)solver.ComputeSolutions, (byte*)solver.Heap, solutions, rk);
+                        int solutionCount = solver.Solve_Opt_Haraka(harakaKey, (ulong*)solver.ComputeSolutions, (byte*)solver.Heap, solutions, rk);
 
                         //Calculate difficulty
                         for (int z = 0; z < solutionCount; z++)
@@ -109,14 +107,7 @@ namespace OrionClientLib.Hashers.CPU
 
         public override bool IsSupported()
         {
-            //if (RuntimeInformation.OSArchitecture == Architecture.Arm)
-            //{
-            //    return System.Runtime.Intrinsics.Arm.Aes.IsSupported;
-            //}
-
-            {
-                return Avx512F.IsSupported;
-            }
+            return System.Runtime.Intrinsics.X86.Aes.IsSupported && Avx2.IsSupported;
         }
     }
 }

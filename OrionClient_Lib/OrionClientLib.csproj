@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="Hashers\CPU\ManagedCPUHarakaHasherVAES.cs" />
+    <None Include="Hashers\CPU\VAES512HarakaCPUHasher.cs" />
   </ItemGroup>
 
   <ItemGroup>
