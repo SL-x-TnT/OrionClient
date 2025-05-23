@@ -118,7 +118,8 @@ namespace OrionClient
             {
                 new Ec1ipseOrePool(),
                 //new ShinystCoalPool(),
-                new CustomOreHQPool()
+                new CustomOreHQPool(),
+                new BitzNoPool()
             };
 
             _modules = new List<IModule>
@@ -525,9 +526,9 @@ namespace OrionClient
                     //Update logs
                     while (_logQueue.TryDequeue(out var log))
                     {
-                        if (_logTable.Rows.Count > 10)
+                        if (_logTable.Rows.Count > 25)
                         {
-                            _logTable.Rows.RemoveAt(10);
+                            _logTable.Rows.RemoveAt(25);
                         }
 
                         string color = "gray";

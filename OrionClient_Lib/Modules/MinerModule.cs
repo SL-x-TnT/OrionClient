@@ -312,8 +312,7 @@ namespace OrionClientLib.Modules
 
             _poolInfoTable.ShowRowSeparators = true;
 
-            //Allows 10 rows
-            if (_poolInfoTable.Rows.Count >= 10)
+            if (_poolInfoTable.Rows.Count >= 25)
             {
                 _poolInfoTable.RemoveRow(_poolInfoTable.Rows.Count - 1);
             }

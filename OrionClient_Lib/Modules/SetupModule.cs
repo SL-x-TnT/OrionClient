@@ -523,12 +523,19 @@ namespace OrionClientLib.Modules
             {
                 (Wallet wallet, string publicKey) = await _data.Settings.GetWalletAsync();
 
+                Console.WriteLine($"DEBUG: SetupModule - Setting wallet info for pool: {chosenPool.Name}");
+                Console.WriteLine($"DEBUG: SetupModule - Wallet: {wallet?.Account?.PublicKey}, PublicKey: {publicKey}");
+                
                 chosenPool.SetWalletInfo(wallet, publicKey);
 
+                Console.WriteLine($"DEBUG: SetupModule - Calling SetupAsync on pool: {chosenPool.Name}");
                 var poolSetup = await chosenPool.SetupAsync(_cts.Token, true);
+                Console.WriteLine($"DEBUG: SetupModule - Pool setup result: {poolSetup.success}");
+                Console.WriteLine($"DEBUG: SetupModule - Pool setup error: {poolSetup.errorMessage}");
 
                 if (!poolSetup.success)
                 {
+                    Console.WriteLine($"DEBUG: SetupModule - Setup failed, setting error message: {poolSetup.errorMessage}");
                     _errorMessage = poolSetup.errorMessage;
 
                     return _currentStep;

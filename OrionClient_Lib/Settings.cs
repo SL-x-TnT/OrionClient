@@ -48,6 +48,8 @@ namespace OrionClientLib
         public StakingViewSettings StakingViewSetting { get; set; } = new StakingViewSettings();
         [SettingDetails("View Event Settings", "Configure Event settings that handle sending events to an external server")]
         public EventWebsocketSettings EventWebsocketSetting { get; set; } = new EventWebsocketSettings();
+        [SettingDetails("View Bitz RPC Settings", "Configure Bitz RPC settings for Eclipse blockchain")]
+        public BitzRPCSettings BitzRPCSetting { get; set; } = new BitzRPCSettings();
 
         public class CPUSettings
         {
@@ -182,6 +184,36 @@ namespace OrionClientLib
             [SettingDetails("Serialization Type", "Type of serialization to use for event messages . (0 = Binary, 1 = Json)")]
             [OptionSettingValidation<SerializationType>(SerializationType.Binary, SerializationType.Json)]
             public SerializationType Serialization { get; set; } = SerializationType.Binary;
+        }
+
+        public class BitzRPCSettings
+        {
+            public enum RPCProvider { Unknown, Eclipse };
+
+            [JsonIgnore]
+            public RPCProvider Provider => GetProvider();
+
+            private RPCProvider GetProvider()
+            {
+                if (Url?.Contains("eclipse") == true)
+                {
+                    return RPCProvider.Eclipse;
+                }
+                return RPCProvider.Unknown;
+            }
+
+            public const string DefaultRPC = "https://bitz-000.eclipserpc.xyz/";
+
+            [SettingDetails("RPC URL", $"RPC URL to use for Bitz requests. Default: {DefaultRPC}")]
+            [UrlSettingValidation]
+            public string Url { get; set; } = DefaultRPC;
+
+            public static readonly string[] AvailableRPCs = new[]
+            {
+                "https://bitz-000.eclipserpc.xyz/",
+                "https://mainnetbeta-rpc.eclipse.xyz/",
+                "https://eclipse.helius-rpc.com/"
+            };
         }
 
         public static async Task<Settings> LoadAsync()
